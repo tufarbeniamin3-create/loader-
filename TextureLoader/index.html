@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>TEXTURE LOADER</title>
+<style>
+:root{--bg:#070b14;--panel:#0c1220;--panel2:#101828;--line:#1a2540;--acc:#1e90ff;--acc2:#00c3ff;--txt:#e6edf7;--mut:#6b7a99}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:radial-gradient(circle at 50% 0,#0d1a33 0,var(--bg) 60%);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;border:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--panel2);border-bottom:1px solid var(--line);-webkit-app-region:drag}
+.logo{font-weight:800;letter-spacing:3px;font-size:14px}.logo b{color:var(--acc);text-shadow:0 0 12px var(--acc)}
+.ctl{-webkit-app-region:no-drag;display:flex;gap:6px}
+.ctl button{background:none;border:0;color:var(--mut);font-size:15px;width:28px;height:24px;cursor:pointer;border-radius:4px}
+.ctl button:hover{background:var(--line);color:#fff}.ctl .c:hover{background:#ff4d6a}
+.body{padding:18px;flex:1;display:flex;flex-direction:column;min-height:0}
+h4{margin:0 0 10px;font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:600}
+.games{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.g{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px;font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;text-align:center;color:var(--mut);transition:.15s}
+.g:hover{color:var(--txt);border-color:#2a3d66}
+.g.on{color:#fff;border-color:var(--acc);background:rgba(30,144,255,.12);box-shadow:0 0 14px rgba(30,144,255,.35) inset}
+.dest{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:14px}
+.dest .p{flex:1;font-size:11px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sm{background:var(--line);color:var(--txt);border:0;border-radius:4px;padding:6px 10px;font-size:11px;letter-spacing:1px;cursor:pointer}.sm:hover{background:#26365e}
+.drop{border:1px dashed #2a3d66;border-radius:8px;padding:24px 12px;text-align:center;cursor:pointer;color:var(--mut);font-size:13px;transition:.15s;margin-bottom:12px}
+.drop:hover,.drop.over{border-color:var(--acc);color:var(--txt);background:rgba(30,144,255,.07)}.drop span{color:var(--acc)}
+#list{flex:1;overflow:auto;min-height:0}
+.file{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px}
+.fn{flex:1;min-width:0;font-weight:700;letter-spacing:1px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
+.fs{font-size:11px;color:var(--mut)}
+.x{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px}.x:hover{color:#ff4d6a}
+.prog{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 6px}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));box-shadow:0 0 10px var(--acc);transition:width .2s}
+.st{font-size:11px;color:var(--mut);letter-spacing:1px;min-height:16px;text-transform:uppercase}
+.btn{width:100%;margin-top:10px;padding:13px;border:0;border-radius:6px;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;font-weight:800;letter-spacing:3px;cursor:pointer;box-shadow:0 0 20px rgba(30,144,255,.45)}
+.btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.nav{display:flex;gap:4px;padding:8px 12px 0;background:var(--panel2);border-bottom:1px solid var(--line)}
+.nav .t{padding:9px 16px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent}
+.nav .t:hover{color:var(--txt)}
+.nav .t.on{color:#fff;border-bottom-color:var(--acc);text-shadow:0 0 10px var(--acc)}
+.view{flex:1;min-height:0;width:100%;border:0}
+[hidden]{display:none!important}
+#v-loader{max-width:680px;margin:0 auto}
+</style></head><body>
+<div class="bar"><div class="logo">TEXTURE<b>LOADER</b></div>
+<div class="ctl"><button onclick="api.win('min')">–</button><button class="c" onclick="api.win('close')">✕</button></div></div>
+<div class="nav" id="nav"><div class="t on" data-v="v-loader">TEXTURE LOADER</div><div class="t" data-v="v-console">CONSOLE</div><div class="t" data-v="v-game">GAME LOADER</div></div>
+<div class="body view" id="v-loader">
+  <h4>SELECT GAME</h4>
+  <div class="games" id="games"></div>
+  <h4>INSTALL FOLDER</h4>
+  <div class="dest"><div class="p" id="dest">NOT SET</div><button class="sm" id="chg">CHANGE</button></div>
+  <h4>FILES</h4>
+  <div class="drop" id="drop">Drag &amp; drop any file here or <span>browse</span></div>
+  <div id="list"></div>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="st" id="st">IDLE</div>
+  <button class="btn" id="go" disabled>LOAD</button>
+</div>
+<iframe class="view" id="v-console" src="views/console.html" hidden></iframe>
+<iframe class="view" id="v-game" src="views/gameloader.html" hidden></iframe>
+<script>
+const games=["ROBLOX","MINECRAFT","CS2","GTA V","FORTNITE","VALORANT"];
+let game="ROBLOX",files=[],dest=null;
+const $=id=>document.getElementById(id);
+const size=b=>b>1048576?(b/1048576).toFixed(2)+" MB":(b/1024).toFixed(1)+" KB";
+const base=p=>p.split(/[\\/]/).pop();
+
+function drawGames(){
+  $("games").innerHTML=games.map(g=>`<div class="g${g===game?" on":""}" data-g="${g}">${g}</div>`).join("");
+}
+async function loadDest(){
+  dest=localStorage.getItem("dest:"+game)||await api.defaultFolder(game);
+  $("dest").textContent=dest?dest.toUpperCase():"NOT SET – CLICK CHANGE";
+  refresh();
+}
+$("games").onclick=e=>{const g=e.target.dataset.g;if(!g)return;game=g;localStorage.setItem("game",g);drawGames();loadDest();$("st").textContent="GAME: "+g};
+$("chg").onclick=async()=>{const f=await api.pickFolder();if(f){localStorage.setItem("dest:"+game,f);loadDest()}};
+
+async function add(paths){
+  for(const p of paths) if(p && !files.some(f=>f.path===p)) files.push({path:p,size:await api.fileSize(p)});
+  render();$("st").textContent="READY · "+game;
+}
+function render(){
+  $("list").innerHTML="";
+  files.forEach((f,i)=>{const d=document.createElement("div");d.className="file";
+    d.innerHTML=`<div class="fn"></div><div class="fs">${size(f.size)}</div><button class="x">✕</button>`;
+    d.querySelector(".fn").textContent=base(f.path).toUpperCase();
+    d.querySelector(".x").onclick=()=>{files.splice(i,1);render()};
+    $("list").appendChild(d)});
+  refresh();
+}
+function refresh(){$("go").disabled=!(files.length&&dest)}
+
+$("drop").onclick=async()=>add(await api.pickFiles());
+["dragover","dragenter"].forEach(n=>$("drop").addEventListener(n,e=>{e.preventDefault();$("drop").classList.add("over")}));
+["dragleave","drop"].forEach(n=>$("drop").addEventListener(n,e=>{e.preventDefault();$("drop").classList.remove("over")}));
+$("drop").addEventListener("drop",e=>add([...e.dataTransfer.files].map(f=>api.pathOf(f))));
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>e.preventDefault());
+
+$("go").onclick=async()=>{
+  $("go").disabled=true;let fail=0;
+  for(let i=0;i<files.length;i++){
+    $("st").textContent="LOADING "+base(files[i].path).toUpperCase()+" → "+game;
+    const r=await api.copyFile(files[i].path,dest);
+    if(!r.ok){fail++;$("st").textContent="ERROR: "+r.error}
+    $("bar").style.width=((i+1)/files.length*100)+"%";
+  }
+  if(!fail)$("st").textContent="LOADED "+files.length+" FILE(S) → "+game;
+  refresh();
+};
+drawGames();loadDest();
+document.querySelectorAll("#nav .t").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll("#nav .t").forEach(x=>x.classList.toggle("on",x===t));
+  ["v-loader","v-console","v-game"].forEach(id=>{$(id).hidden=id!==t.dataset.v});
+});
+</script></body></html>

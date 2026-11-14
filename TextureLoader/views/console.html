@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HOLLOW-80 Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0914; --shell:#120f1f; --panel:#15122a; --line:#2a2547;
+  --text:#d9d6ec; --muted:#746f99; --accent:#8b5cf6; --accent2:#c4b5fd; --accentglow:rgba(139,92,246,.45);
+  --screen:#07060c;
+  --font:'VT323',monospace; --fontui:'Rajdhani',sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0a0914}}
+:root[data-theme="dark"]{--bg:#0a0914}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,#17122c 0%,var(--bg) 60%);color:var(--text);font-family:var(--fontui);
+  display:flex;align-items:center;justify-content:center;padding:18px}
+.console{width:100%;max-width:680px;background:var(--shell);border-radius:14px;border:1px solid var(--line);
+  box-shadow:0 25px 60px rgba(0,0,0,.55),0 0 0 1px rgba(139,92,246,.06);overflow:hidden;display:flex}
+.sidebar{width:150px;background:var(--panel);border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:4px}
+.sidebar .logo{font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--accent2);padding:4px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.tab{padding:9px 10px;border-radius:6px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.tab:hover{color:var(--text)}
+.tab.active{background:linear-gradient(90deg,var(--accentglow),transparent);color:#fff;box-shadow:inset 2px 0 0 var(--accent)}
+.main{flex:1;padding:18px 18px 16px;display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.topbar .tag{font-size:12px;color:var(--muted);letter-spacing:.08em}
+.statusdot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px 3px var(--accentglow);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.screen{position:relative;background:var(--screen);border-radius:8px;border:1px solid var(--line);aspect-ratio:16/9;overflow:hidden;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.8),inset 0 0 1px var(--accentglow)}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px)}
+.crt{position:absolute;left:0;right:0;top:0;bottom:34%;padding:12px 12px 0;font-family:var(--font);font-size:19px;line-height:1.3;color:var(--accent2);
+  text-shadow:0 0 6px var(--accentglow);overflow:hidden;white-space:pre-wrap}
+.stage{position:absolute;left:0;right:0;bottom:0;height:34%;border-top:1px dashed var(--line);overflow:hidden}
+.ground{position:absolute;left:0;right:0;bottom:10px;height:1px;background:var(--accent);opacity:.5}
+.hud{position:absolute;right:8px;top:4px;font:15px var(--font);color:var(--muted)}
+.hero{position:absolute;bottom:11px;left:0;font:28px var(--font);color:#fff;text-shadow:0 0 10px var(--accent);line-height:1;will-change:transform}
+.hero.god{color:#fde68a;text-shadow:0 0 12px #f59e0b}
+.hero.ghost{opacity:.45}
+.shadow{position:absolute;bottom:8px;left:0;width:22px;height:4px;border-radius:50%;background:var(--accent);opacity:.35;will-change:transform}
+.cursor{display:inline-block;width:10px;background:var(--accent2);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.toggles{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.sw{width:32px;height:18px;border-radius:10px;background:#231f3d;position:relative;cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#574f82;transition:all .15s}
+.sw.on{background:linear-gradient(90deg,var(--accent),#6d28d9)}
+.sw.on::after{left:16px;background:#fff;box-shadow:0 0 6px var(--accentglow)}
+.inputRow{display:flex;gap:8px;margin-top:12px}
+#cmd{flex:1;background:var(--screen);border:1px solid var(--line);border-radius:6px;color:var(--text);
+  font-family:var(--font);font-size:17px;padding:8px 10px;min-width:0}
+#send{padding:8px 16px;background:linear-gradient(135deg,var(--accent),#6d28d9);color:#fff;border:0;border-radius:6px;
+  font:600 13px var(--fontui);letter-spacing:.03em;cursor:pointer;box-shadow:0 2px 10px var(--accentglow)}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.hint{text-align:center;color:var(--muted);font-size:11px;margin-top:10px}
+@media (max-width:480px){.sidebar{width:100px}.sidebar .logo{font-size:13px}.tab{font-size:12px}.crt{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="console">
+  <div class="sidebar">
+    <div class="logo">HOLLOW-80</div>
+    <div class="tab active" data-tab="shell">Shell</div>
+    <div class="tab" data-tab="carts">Cartridges</div>
+    <div class="tab" data-tab="config">Config</div>
+    <div class="tab" data-tab="about">About</div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div><span class="statusdot"></span><span class="tag">SHELL ACTIVE</span></div>
+      <div class="tag" id="clock">00:00:00</div>
+    </div>
+    <div class="screen">
+      <div class="crt" id="crt" aria-live="polite"></div>
+      <div class="stage" id="stage">
+        <div class="hud" id="hud"></div>
+        <div class="ground"></div>
+        <div class="shadow" id="shadow"></div>
+        <div class="hero" id="hero">☻</div>
+      </div>
+    </div>
+    <div class="toggles">
+      <div class="toggle"><div class="sw on" data-key="crt"></div> CRT glow</div>
+      <div class="toggle"><div class="sw on" data-key="sound"></div> Boot chime</div>
+      <div class="toggle"><div class="sw" data-key="auto"></div> Auto-fortune</div>
+    </div>
+    <div class="inputRow">
+      <input id="cmd" type="text" placeholder="type a command, try: fly" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button id="send">ENTER</button>
+    </div>
+    <div class="hint">Dev commands control the little hero on this console’s stage only. Use ↑ / ↓ for command history.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var screen=document.getElementById('crt');
+  var input=document.getElementById('cmd');
+  var send=document.getElementById('send');
+  var clock=document.getElementById('clock');
+  var stage=document.getElementById('stage');
+  var hero=document.getElementById('hero');
+  var shadow=document.getElementById('shadow');
+  var hud=document.getElementById('hud');
+  var lines=[]; var MAX=6; var autoTimer=null;
+  var hist=[]; var hi=0;
+
+  /* ---- hero state ---- */
+  var S={fly:false,god:false,noclip:false,speed:3,x:20,dir:1,y:0,vy:0,walk:true,items:[],t:0};
+
+  function tickClock(){
+    var d=new Date();
+    function p(n){return (n<10?'0':'')+n}
+    clock.textContent=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+  }
+  setInterval(tickClock,1000); tickClock();
+
+  function frame(){
+    var w=stage.clientWidth-30, h=stage.clientHeight;
+    S.t+=0.05;
+    if(S.walk){
+      S.x+=S.dir*S.speed*0.5;
+      if(S.x>w){S.x=w;S.dir=-1} else if(S.x<0){S.x=0;S.dir=1}
+    }
+    var maxY=Math.max(20,h-48);
+    if(S.fly){
+      var target=maxY*0.7+Math.sin(S.t*2)*6;
+      S.y+=(target-S.y)*0.08; S.vy=0;
+    } else {
+      S.vy-=0.5; S.y+=S.vy;
+      if(S.y<=0){S.y=0;S.vy=0}
+    }
+    hero.style.transform='translate('+S.x+'px,'+(-S.y)+'px) scaleX('+S.dir+')';
+    var sc=Math.max(.4,1-S.y/(maxY*1.4));
+    shadow.style.transform='translate('+(S.x+3)+'px,0) scaleX('+sc+')';
+    shadow.style.opacity=.35*sc;
+    hero.className='hero'+(S.god?' god':'')+(S.noclip?' ghost':'');
+    var f=[]; if(S.fly)f.push('FLY'); if(S.god)f.push('GOD'); if(S.noclip)f.push('NOCLIP');
+    hud.textContent=f.join(' · ')+(f.length?' · ':'')+'spd '+S.speed+' · x '+Math.round(S.x);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function println(t){ lines.push(t); if(lines.length>MAX) lines=lines.slice(lines.length-MAX); render(); }
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+  function render(){ screen.innerHTML=lines.map(esc).join('\n')+'\n'+'<span class="cursor">&nbsp;</span>'; }
+
+  var menu={
+    help:"look status cart <name> fortune reset\nfly land jump speed <1-10> tp <0-100>\ngod noclip walk give <item> inv clear",
+    look:"A dim shelf. Three cartridges sit in the dust:\n - EMBERFALL\n - HOLLOWMERE\n - NULLPOINTER"
+  };
+  var carts={
+    emberfall:"EMBERFALL (demo)\nA small hero walks a long road at dusk.",
+    hollowmere:"HOLLOWMERE (demo)\nA robed figure waits at the tree line, watching.",
+    nullpointer:"NULLPOINTER (demo)\nA puzzle box with no solution. Label says “later.”"
+  };
+  var fortunes=["The next load screen will be shorter than you think.",
+    "A cartridge you forgot about still works fine.",
+    "Somewhere, a save file is quietly corrupting. Not yours, today."];
+
+  function onoff(v){return v?'ON':'OFF'}
+
+  function run(raw){
+    var t=raw.trim(); if(!t) return;
+    hist.push(t); hi=hist.length;
+    println('> '+t);
+    var parts=t.toLowerCase().split(/\s+/), c=parts[0], a=parts[1];
+    if(c==='help') println(menu.help);
+    else if(c==='look') println(menu.look);
+    else if(c==='status') println('fly:'+onoff(S.fly)+' god:'+onoff(S.god)+' noclip:'+onoff(S.noclip)+' speed:'+S.speed+' items:'+S.items.length);
+    else if(c==='fortune') println(fortunes[Math.floor(Math.random()*fortunes.length)]);
+    else if(c==='cart'){
+      var name=parts.slice(1).join('');
+      println(carts[name]||("no cartridge named “"+(a||'')+"”. try: cart emberfall"));
+    }
+    else if(c==='fly'){
+      if(a==='off'||a==='0'){S.fly=false;println('fly: OFF')}
+      else {S.fly=!S.fly||a==='on';println('fly: '+onoff(S.fly))}
+    }
+    else if(c==='land'){S.fly=false;println('landing…')}
+    else if(c==='jump'){ if(!S.fly&&S.y<1){S.vy=9;println('hop!')} else println('already airborne') }
+    else if(c==='speed'){
+      var n=parseFloat(a);
+      if(isNaN(n)) println('speed is '+S.speed+'. usage: speed <1-10>');
+      else {S.speed=Math.max(1,Math.min(10,n));println('speed: '+S.speed)}
+    }
+    else if(c==='tp'){
+      var p=parseFloat(a);
+      if(isNaN(p)) println('usage: tp <0-100>');
+      else {S.x=(Math.max(0,Math.min(100,p))/100)*(stage.clientWidth-30);println('teleported to '+Math.round(p)+'%')}
+    }
+    else if(c==='god'){S.god=!S.god;println('god mode: '+onoff(S.god))}
+    else if(c==='noclip'){S.noclip=!S.noclip;println('noclip: '+onoff(S.noclip))}
+    else if(c==='walk'){S.walk=!S.walk;println('auto-walk: '+onoff(S.walk))}
+    else if(c==='give'){
+      var item=parts.slice(1).join(' ');
+      if(!item) println('usage: give <item>');
+      else {S.items.push(item);println('gave 1 × '+item)}
+    }
+    else if(c==='inv') println(S.items.length?('inventory: '+S.items.join(', ')):'inventory is empty');
+    else if(c==='clear'){lines=[];render()}
+    else if(c==='reset'){ S.fly=S.god=S.noclip=false;S.walk=true;S.speed=3;S.items=[];S.x=20;S.y=0;boot(); }
+    else println("unknown command. type “help”");
+  }
+
+  function boot(){
+    lines=[];
+    println('HOLLOW-80 SHELL v0.6 [dev]');
+    println('linking display ....... ok');
+    println('linking input ......... ok');
+    println("type “help” to begin");
+  }
+
+  send.addEventListener('click',function(){run(input.value);input.value='';input.focus()});
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){run(input.value);input.value=''}
+    else if(e.key==='ArrowUp'&&hist.length){e.preventDefault();hi=Math.max(0,hi-1);input.value=hist[hi]}
+    else if(e.key==='ArrowDown'&&hist.length){e.preventDefault();hi=Math.min(hist.length,hi+1);input.value=hist[hi]||''}
+  });
+
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+      tab.classList.add('active');
+      var key=tab.dataset.tab;
+      if(key==='shell') return;
+      if(key==='carts') run('look');
+      else if(key==='config') println('(config tab is just for show — try the toggles below)');
+      else if(key==='about') println('HOLLOW-80: a fake console shell with dev commands. Type “help”.');
+    });
+  });
+
+  document.querySelectorAll('.sw').forEach(function(sw){
+    sw.addEventListener('click',function(){
+      sw.classList.toggle('on');
+      var on=sw.classList.contains('on');
+      if(sw.dataset.key==='auto'){
+        clearInterval(autoTimer);
+        if(on) autoTimer=setInterval(function(){println(fortunes[Math.floor(Math.random()*fortunes.length)])},8000);
+      }
+      if(sw.dataset.key==='crt'){ document.querySelector('.screen').style.filter = on ? '' : 'saturate(.4) brightness(.8)'; }
+    });
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>

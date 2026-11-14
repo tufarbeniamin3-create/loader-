@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Custom Game Loader</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f1f7; --panel:#ffffff; --text:#241f3a; --muted:#6a6486; --line:#d9d4e6;
+  --sky1:#1d1a4a; --sky2:#6b3f8f; --sky3:#f08a6b;
+  --hill1:#2a2358; --hill2:#1a1640; --ground:#120f2e;
+  --accent:#ffc857; --accent-ink:#2a1d00;
+  --font:'Pixelify Sans','Courier New',monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#15122b;--panel:#1f1b3d;--text:#ece9f8;--muted:#a49fc4;--line:#37315f}
+}
+:root[data-theme="dark"]{--bg:#15122b;--panel:#1f1b3d;--text:#ece9f8;--muted:#a49fc4;--line:#37315f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+.screen{position:relative;aspect-ratio:16/10;min-height:340px;overflow:hidden;border-radius:6px;
+  background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 58%,var(--sky3) 100%);color:#fff}
+.moon{position:absolute;top:12%;right:14%;width:64px;height:64px;border-radius:50%;background:#fff3d6;
+  box-shadow:0 0 0 10px rgba(255,243,214,.12),0 0 0 22px rgba(255,243,214,.06)}
+.star{position:absolute;width:3px;height:3px;background:#fff;opacity:.7}
+.hill{position:absolute;left:-5%;right:-5%;bottom:0;border-radius:50% 50% 0 0}
+.h1{height:46%;background:var(--hill1);bottom:14%}
+.h2{height:34%;background:var(--hill2);bottom:10%;left:20%;right:-30%}
+.ground{position:absolute;left:0;right:0;bottom:0;height:22%;background:var(--ground)}
+.title{position:absolute;top:10%;left:0;right:0;text-align:center;font-size:clamp(28px,6vw,56px);
+  font-weight:600;letter-spacing:.04em;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 12px}
+.subtitle{position:absolute;top:calc(10% + clamp(36px,7.5vw,70px));left:0;right:0;text-align:center;color:#ffe9c7;font-size:clamp(13px,2vw,18px)}
+.path{position:absolute;left:8%;right:8%;bottom:8%;height:10px;background:rgba(255,255,255,.14)}
+.fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent)}
+.hero{position:absolute;bottom:100%;left:0;width:20px;height:30px;transform:translateX(-50%);margin-bottom:2px}
+.hero i{position:absolute;display:block}
+.hero .hd{left:3px;top:0;width:14px;height:12px;background:#ffd9b0}
+.hero .cap{left:1px;top:-4px;width:18px;height:6px;background:var(--accent)}
+.hero .bd{left:4px;top:12px;width:12px;height:10px;background:#e8603c}
+.hero .lg{top:22px;width:5px;height:8px;background:#f3f0ff}
+.hero .l1{left:5px}.hero .l2{left:11px}
+.hero{animation:bob .4s steps(2) infinite}
+.hero .l1{animation:step .4s steps(2) infinite}
+.hero .l2{animation:step .4s steps(2) infinite reverse}
+.done .hero,.done .hero .lg{animation:none}
+@keyframes bob{50%{margin-bottom:4px}}
+@keyframes step{50%{height:4px}}
+.hud{position:absolute;left:8%;right:8%;bottom:calc(8% + 26px);display:flex;justify-content:space-between;gap:12px;font-size:clamp(13px,2vw,17px)}
+.pct{font-weight:600;min-width:4ch;text-align:right}
+.tip{position:absolute;left:8%;right:8%;bottom:calc(8% - 2px);transform:translateY(100%);padding-top:10px;color:#cfc8ee;font-size:clamp(12px,1.8vw,15px)}
+.start{position:absolute;left:50%;top:44%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);border:0;
+  padding:12px 22px;font:600 clamp(16px,2.6vw,22px) var(--font);cursor:pointer;border-radius:4px;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.start[hidden]{display:none}
+.start:active{transform:translate(-50%,3px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.panel{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;align-items:end}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+input[type=text],select{width:100%;padding:8px 10px;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:4px}
+input[type=color]{width:100%;height:40px;padding:2px;background:var(--bg);border:1px solid var(--line);border-radius:4px}
+.btn{padding:9px 14px;font:600 16px var(--font);background:var(--accent);color:var(--accent-ink);border:0;border-radius:4px;cursor:pointer}
+@media (prefers-reduced-motion: reduce){.hero,.hero .lg{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="screen" id="screen">
+    <div class="moon"></div>
+    <div id="stars"></div>
+    <div class="hill h2"></div><div class="hill h1"></div><div class="ground"></div>
+    <div class="title" id="title">Emberfall</div>
+    <div class="subtitle" id="sub">Chapter 1: The Long Walk</div>
+    <button class="start" id="start" hidden>Press to start</button>
+    <div class="hud"><span id="status" aria-live="polite">Waking the world</span><span class="pct" id="pct">0%</span></div>
+    <div class="path"><div class="fill" id="fill"></div>
+      <div class="hero" id="hero"><i class="cap"></i><i class="hd"></i><i class="bd"></i><i class="lg l1"></i><i class="lg l2"></i></div>
+    </div>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="panel">
+    <div><label for="inTitle">Game title</label><input type="text" id="inTitle" value="Hollowmere" maxlength="28"></div>
+    <div><label for="inSub">Subtitle</label><input type="text" id="inSub" value="Something is watching" maxlength="44"></div>
+    <div><label for="inColor">Accent color</label><input type="color" id="inColor" value="#8a1f1f"></div>
+    <div><label for="inSpeed">Load time</label>
+      <select id="inSpeed"><option value="3">Quick (3s)</option><option value="6" selected>Normal (6s)</option><option value="12">Slow (12s)</option></select></div>
+    <div><button class="btn" id="replay">Replay loader</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var statuses=['Waking the world','Lighting the lanterns','Loading textures','Tuning the music','Placing the enemies','Almost there'];
+  var tips=['Tip: Rest at a lantern to restore your health.','Tip: Chests glow brighter when keys are nearby.','Tip: Dodge right before an enemy strikes.','Tip: You can change controls in Settings.'];
+  var p=0,timer=null,dur=6;
+
+  // stars
+  var s=$('stars'),h='';
+  for(var i=0;i<26;i++){h+='<span class="star" style="left:'+(Math.random()*100)+'%;top:'+(Math.random()*40)+'%;opacity:'+(.3+Math.random()*.6)+'"></span>';}
+  s.innerHTML=h;
+
+  function render(){
+    var v=Math.min(100,p);
+    $('fill').style.width=v+'%';
+    $('hero').style.left=v+'%';
+    $('pct').textContent=Math.floor(v)+'%';
+    $('status').textContent=v>=100?'Ready':statuses[Math.min(statuses.length-1,Math.floor(v/100*statuses.length))];
+  }
+  function finish(){
+    clearInterval(timer);
+    $('screen').classList.add('done');
+    $('start').hidden=false;
+    $('start').focus();
+  }
+  function run(){
+    clearInterval(timer);
+    p=0;$('screen').classList.remove('done');$('start').hidden=true;
+    $('tip').textContent=tips[Math.floor(Math.random()*tips.length)];
+    render();
+    var tick=100,stall=0;
+    timer=setInterval(function(){
+      if(stall>0){stall--;return}
+      if(Math.random()<.06){stall=Math.floor(Math.random()*5)+2;return}
+      p+=(100/(dur*1000/tick))*(.5+Math.random()*1.0);
+      if(p>=100){p=100;render();finish();return}
+      render();
+    },tick);
+  }
+
+  $('inTitle').addEventListener('input',function(){$('title').textContent=this.value||'Untitled'});
+  $('inSub').addEventListener('input',function(){$('sub').textContent=this.value});
+  $('inColor').addEventListener('input',function(){
+    var c=this.value;document.documentElement.style.setProperty('--accent',c);
+    var r=parseInt(c.substr(1,2),16),g=parseInt(c.substr(3,2),16),b=parseInt(c.substr(5,2),16);
+    var lum=(.299*r+.587*g+.114*b)/255;
+    document.documentElement.style.setProperty('--accent-ink',lum>.55?'#241f3a':'#ffffff');
+  });
+  $('inSpeed').addEventListener('change',function(){dur=+this.value;run()});
+  $('replay').addEventListener('click',run);
+  $('start').addEventListener('click',function(){this.textContent='Starting…';var b=this;setTimeout(function(){b.textContent='Press to start'},1200)});
+  run();
+})();
+</script>
+</body>
+</html>
