@@ -1,0 +1,32 @@
+name: Build TextureLoader EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - exe
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: TextureLoader
+        run: npm install
+
+      - name: Build EXE
+        working-directory: TextureLoader
+        run: npm run build
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: TextureLoader-exe
+          path: TextureLoader/dist/*.exe
+          if-no-files-found: error
